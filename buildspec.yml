@@ -1,0 +1,25 @@
+version: 0.2
+env:
+  variables:
+    DOCKER_BUILDKIT: "1"
+phases:
+  install:
+    runtime-versions:
+      docker: 18
+  pre_build:
+    commands:
+      - $(aws ecr get-login --region $AWS_REGION --no-include-email)
+  build:
+    commands:
+      - docker build -t $ECR_REPO_NAME . 
+      - docker tag $ECR_REPO_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:latest # latest
+      - docker tag $ECR_REPO_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION # commit hash
+  post_build:
+    commands:
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:latest
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - printf '[{"name":"%s","imageUri":"%s"}]' $ECR_REPO_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:latest > imagedefinitions.json
+artifacts:
+  files:
+    - imagedefinitions.json
+

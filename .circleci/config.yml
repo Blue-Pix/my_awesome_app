@@ -1,0 +1,67 @@
+version: 2.1
+commands:
+  install_awscli:
+    steps:
+      - run: |
+          sudo apt-get install python-pip
+          sudo pip install awscli
+  configure_env:
+    steps:
+      - run: |
+          echo "export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY" >> $BASH_ENV
+          echo "export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> $BASH_ENV
+          echo "export AWS_DEFAULT_REGION=ap-northeast-1" >> $BASH_ENV
+          echo "export PIPELINE_NAME=$PIPELINE_NAME" >> $BASH_ENV
+jobs:
+  build:
+    parallelism: 1
+    docker:
+      - image: circleci/ruby:2.6.5
+        environment:
+          RAILS_ENV: test
+          DB_HOST: 127.0.0.1
+          DB_USERNAME: 'root'
+          DB_PASSWORD: ''
+          TZ: Asia/Tokyo
+      - image: circleci/mysql:5.7
+        environment:
+          TZ: Asia/Tokyo
+    working_directory: ~/my_app
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - dependencies-{{ checksum "Gemfile.lock" }}
+            - dependencies-
+
+      - run: bundle install --deployment --jobs=4 --path vendor/bundle
+
+      - save_cache:
+          key: dependencies-{{ checksum "Gemfile.lock" }}
+          paths:
+            - "./vendor/bundle"
+
+      - run: bundle exec rake db:create
+      - run: bundle exec rake db:migrate
+
+  deploy:
+    docker:
+      - image: circleci/python:3
+    steps:
+      - install_awscli
+      - configure_env
+      - run: aws codepipeline start-pipeline-execution --name $PIPELINE_NAME
+
+workflows:
+  version: 2
+  commit:
+    jobs:
+      - build
+      - deploy:
+          filters:
+            branches:
+              only:
+                - master
+          requires:
+            - build
