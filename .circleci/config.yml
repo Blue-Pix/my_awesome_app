@@ -36,7 +36,15 @@ jobs:
             - dependencies-{{ checksum "Gemfile.lock" }}
             - dependencies-
 
-      - run: bundle install --deployment --jobs=4 --path vendor/bundle
+      - run:
+          name: bundle install
+          command: |
+            sudo gem update --system
+            sudo gem uninstall bundler
+            sudo rm /usr/local/bin/bundle
+            sudo rm /usr/local/bin/bundler
+            sudo gem install bundler 
+            bundle install --deployment --jobs=4 --path vendor/bundle
 
       - save_cache:
           key: dependencies-{{ checksum "Gemfile.lock" }}
