@@ -9,7 +9,7 @@ commands:
     steps:
       - run: |
           echo "export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY" >> $BASH_ENV
-          echo "export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> $BASH_ENV
+          echo "export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_KEY" >> $BASH_ENV
           echo "export AWS_DEFAULT_REGION=ap-northeast-1" >> $BASH_ENV
           echo "export PIPELINE_NAME=$PIPELINE_NAME" >> $BASH_ENV
 jobs:
