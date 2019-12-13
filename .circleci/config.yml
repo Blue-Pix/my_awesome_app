@@ -23,6 +23,7 @@ jobs:
           DB_USERNAME: 'root'
           DB_PASSWORD: ''
           TZ: Asia/Tokyo
+          BUNDLER_VERSION: 2.0.2
       - image: circleci/mysql:5.7
         environment:
           TZ: Asia/Tokyo
